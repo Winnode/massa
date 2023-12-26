@@ -9,6 +9,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
+// Baca data dari dashboard_data.json
 let jsonData;
 try {
   jsonData = fs.readFileSync('dashboard_data.json', 'utf-8');
@@ -25,10 +26,12 @@ try {
   process.exit(1);
 }
 
+// Fungsi untuk mencari informasi wallet berdasarkan alamat
 function findWalletInfo(walletAddress) {
   return dashboardData[walletAddress] || null;
 }
 
+// Handle permintaan dari formulir di frontend untuk banyak wallet
 app.post('/check-wallets', (req, res) => {
   const walletAddresses = req.body.walletAddresses;
 
@@ -47,12 +50,15 @@ app.post('/check-wallets', (req, res) => {
       }
     });
 
+    res.setHeader('Content-Type', 'application/json'); // Set Content-Type header
     res.status(200).json({ message: results.join('\n') });
   } catch (error) {
+    console.error(`Error processing wallets: ${error.message}`);
     res.status(500).json({ message: `Error processing wallets: ${error.message}` });
   }
 });
 
+// Menangani rute untuk halaman utama
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
