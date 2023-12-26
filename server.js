@@ -5,14 +5,10 @@ const fs = require('fs');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  next();
-});
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(express.static('public'));
 
-
-// Baca data dari dashboard_data.json
 let jsonData;
 try {
   jsonData = fs.readFileSync('dashboard_data.json', 'utf-8');
@@ -29,13 +25,10 @@ try {
   process.exit(1);
 }
 
-
-// Fungsi untuk mencari informasi wallet berdasarkan alamat
 function findWalletInfo(walletAddress) {
   return dashboardData[walletAddress] || null;
 }
 
-// Handle permintaan dari formulir di frontend untuk banyak wallet
 app.post('/check-wallets', (req, res) => {
   const walletAddresses = req.body.walletAddresses;
 
@@ -46,7 +39,6 @@ app.post('/check-wallets', (req, res) => {
         const nodeRunningCoins = parseFloat(walletInfo.node_running_coins) || 0;
         const ambassadorCoins = parseFloat(walletInfo.ambassador_coins) || 0;
         const questCoins = parseFloat(walletInfo.quest_coins) || 0;
-
         const totalCoins = nodeRunningCoins + ambassadorCoins + questCoins;
 
         return `Total Coins for ${walletAddress}: ${totalCoins} coins`;
@@ -61,12 +53,9 @@ app.post('/check-wallets', (req, res) => {
   }
 });
 
-// Menangani rute untuk halaman utama
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
-
-// Tambahkan rute atau logika server lainnya jika diperlukan
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
