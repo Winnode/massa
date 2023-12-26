@@ -26,6 +26,7 @@ try {
   process.exit(1);
 }
 
+
 // Fungsi untuk mencari informasi wallet berdasarkan alamat
 function findWalletInfo(walletAddress) {
   return dashboardData[walletAddress] || null;
