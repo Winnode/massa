@@ -1,107 +1,67 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wallet Information</title>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f8f8f8;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
+const express = require('express');
+const bodyParser = require('body-parser');
+const fs = require('fs');
 
-    #form-container {
-      background-color: #ffffff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-      width: 500px;
-      text-align: center;
-    }
+const app = express();
+const port = 3000;
 
-    h1 {
-      color: #4caf50;
-    }
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(express.static('public'));
 
-    label {
-      display: block;
-      margin: 15px 0 10px;
-      font-weight: bold;
-    }
+// Baca data dari dashboard_data.json
+let jsonData;
+try {
+  jsonData = fs.readFileSync('dashboard_data.json', 'utf-8');
+} catch (error) {
+  console.error(`Error reading dashboard_data.json: ${error.message}`);
+  process.exit(1);
+}
 
-    input {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 20px;
-      box-sizing: border-box;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-    }
+let dashboardData;
+try {
+  dashboardData = JSON.parse(jsonData);
+} catch (error) {
+  console.error(`Error parsing dashboard_data.json: ${error.message}`);
+  process.exit(1);
+}
 
-    button {
-      background-color: #4caf50;
-      color: white;
-      padding: 14px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      width: 100%;
-      font-size: 18px;
-    }
+// Fungsi untuk mencari informasi wallet berdasarkan alamat
+function findWalletInfo(walletAddress) {
+  return dashboardData[walletAddress] || null;
+}
 
-    #result {
-      margin-top: 30px;
-      color: #333;
-      font-size: 16px;
-    }
-  </style>
-</head>
-<body>
-  <div id="form-container">
-    <h1>Check Massa Wallet Bangpateng Group</h1>
-    <form id="walletForm">
-      <label for="walletAddresses">Wallet Addresses (comma-separated):</label>
-      <input type="text" id="walletAddresses" name="walletAddresses" required>
-      <button type="submit">Check Wallets</button>
-    </form>
-    <div id="result"></div>
-  </div>
+// Handle permintaan dari formulir di frontend untuk banyak wallet
+app.post('/check-wallets', (req, res) => {
+  const walletAddresses = req.body.walletAddresses;
 
-  <script>
-    document.getElementById('walletForm').addEventListener('submit', function(event) {
-      event.preventDefault();
-      checkWallet();
+  try {
+    const results = walletAddresses.map(walletAddress => {
+      const walletInfo = findWalletInfo(walletAddress);
+      if (walletInfo) {
+        const nodeRunningCoins = parseFloat(walletInfo.node_running_coins) || 0;
+        const ambassadorCoins = parseFloat(walletInfo.ambassador_coins) || 0;
+        const questCoins = parseFloat(walletInfo.quest_coins) || 0;
+
+        const totalCoins = nodeRunningCoins + ambassadorCoins + questCoins;
+
+        return `Total Coins for ${walletAddress}: ${totalCoins} coins`;
+      } else {
+        return `No information found for wallet address: ${walletAddress}`;
+      }
     });
 
-    async function checkWallet() {
-      const walletAddresses = document.getElementById('walletAddresses').value.split(',');
+    res.status(200).json({ message: results.join('\n') });
+  } catch (error) {
+    res.status(500).json({ message: `Error processing wallets: ${error.message}` });
+  }
+});
 
-      try {
-        const response = await fetch('/check-wallets', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ walletAddresses }),
-        });
+// Menangani rute untuk halaman utama
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        document.getElementById('result').innerText = result.message;
-      } catch (error) {
-        console.error('Error during fetch:', error);
-        document.getElementById('result').innerText = 'An error occurred during the request.';
-      }
-    }
-  </script>
-</body>
-</html>
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
+});

@@ -68,17 +68,12 @@
     <form id="walletForm">
       <label for="walletAddresses">Wallet Addresses (comma-separated):</label>
       <input type="text" id="walletAddresses" name="walletAddresses" required>
-      <button type="submit">Check Wallets</button>
+      <button type="button" onclick="checkWallet()">Check Wallets</button>
     </form>
     <div id="result"></div>
   </div>
 
   <script>
-    document.getElementById('walletForm').addEventListener('submit', function(event) {
-      event.preventDefault();
-      checkWallet();
-    });
-
     async function checkWallet() {
       const walletAddresses = document.getElementById('walletAddresses').value.split(',');
 
@@ -92,14 +87,14 @@
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+          throw new Error(`Network response was not ok (${response.status} ${response.statusText})`);
         }
 
         const result = await response.json();
         document.getElementById('result').innerText = result.message;
       } catch (error) {
-        console.error('Error during fetch:', error);
-        document.getElementById('result').innerText = 'An error occurred during the request.';
+        console.error('Error during network request:', error);
+        document.getElementById('result').innerText = 'An error occurred during the request. Please check the console for details.';
       }
     }
   </script>
