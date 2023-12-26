@@ -3,12 +3,12 @@ async function checkWallet() {
 
   try {
     const response = await fetch('/check-wallets', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ walletAddresses }),
-    });
+		  method: 'POST',
+		  headers: {
+			'Content-Type': 'application/json',
+		  },
+		  body: JSON.stringify({ walletAddresses }),
+		})
 
     const result = await response.json();
 
